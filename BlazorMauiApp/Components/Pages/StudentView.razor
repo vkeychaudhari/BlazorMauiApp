@@ -1,0 +1,28 @@
+﻿@page "/studentview"
+@inject NavigationManager Navigation
+@using System.Text.Json
+@using BlazorMauiApp.Models
+
+<h3>Details Page</h3>
+<p>Student ID: @student.Id</p>
+<p>Student Name: @student.Name</p>
+<p>Student Age: @student.Age</p>
+
+@code {
+
+    private Student student = new Student();
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var encodedJson = query["student"];
+
+        if (!string.IsNullOrEmpty(encodedJson))
+        {
+            var json = Uri.UnescapeDataString(encodedJson);
+            student = JsonSerializer.Deserialize<Student>(json);
+        }
+    }
+
+}

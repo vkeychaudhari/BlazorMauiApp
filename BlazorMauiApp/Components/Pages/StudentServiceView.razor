@@ -1,0 +1,62 @@
+﻿@page "/studentserviceview"
+@using BlazorMauiApp.Models
+@using BlazorMauiApp.Services
+@inject StudentService StudentService
+@inject NavigationManager Navigation
+
+@if (StudentService.CurrentStudent == null)
+{
+    <p>No student data available</p>
+    <button class="btn btn-primary" @onclick="RefreshData">Refresh</button>
+}
+else
+{
+    <p>Student ID: @StudentService.CurrentStudent.Id</p>
+    <p>Student Name: @StudentService.CurrentStudent.Name</p>
+    <p>Student Age: @StudentService.CurrentStudent.Age</p>
+}
+
+@code {
+
+    private System.Timers.Timer timer;
+
+    protected override void OnInitialized()
+    {
+        if (StudentService.CurrentStudent == null)
+        {
+            timer = new System.Timers.Timer(2000); // 2 seconds
+            timer.Elapsed += OnTimerElapsed;
+            timer.AutoReset = true;
+            timer.Enabled = true;
+            // Navigate back to the main page if no student data is available
+            // Navigation.NavigateTo("/");
+        }
+
+    }
+
+    private void OnTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Update the current time on the UI thread
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            RefreshData(null);
+            StateHasChanged();
+        });
+        // Invoke the StateHasChanged method to refresh the UI
+        //InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        // Dispose the timer when the component is disposed
+        timer?.Dispose();
+    }
+
+    int i = 0;
+    private void RefreshData(MouseEventArgs e)
+    {
+        var student = new Student { Id = i, Name = $"John Doe {i}", Age = 20 };
+        StudentService.CurrentStudent = student;
+        i++;
+    }
+}

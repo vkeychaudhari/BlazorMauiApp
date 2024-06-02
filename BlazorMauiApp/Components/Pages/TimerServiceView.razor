@@ -1,0 +1,31 @@
+﻿@page "/timerview"
+@using BlazorMauiApp.Services
+
+@implements IDisposable
+
+<h3>Timer Component</h3>
+
+<p>Current Time: @currentTime</p>
+
+@code {
+    [Inject] private TimerService TimerService { get; set; }
+
+    private string currentTime;
+
+    protected override void OnInitialized()
+    {
+        currentTime = TimerService.CurrentTime;
+        TimerService.OnTick += UpdateTime;
+    }
+
+    private void UpdateTime()
+    {
+        currentTime = TimerService.CurrentTime;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        TimerService.OnTick -= UpdateTime;
+    }
+}

@@ -1,0 +1,48 @@
+﻿@page "/counter"
+@inject NavigationManager Navigation
+@using System.Text.Json
+@using BlazorMauiApp.Models
+@using BlazorMauiApp.Services
+@inject StudentService StudentService
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="PassingIntParameter">Passing Parameter Int</button>
+<button class="btn btn-primary" @onclick="PassingObjectParameterFirstApproach">Passing Object First Approach</button>
+<button class="btn btn-primary" @onclick="PassingObjectParameterSecondApproach">Passing Object Second Approach</button>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        //currentCount++;
+        //Navigation.NavigateTo("/weather/5");
+        //Navigation.NavigateTo("/studentview");
+        var student = new Student { Id = 1, Name = "John Doe", Age = 20 };
+        var json = JsonSerializer.Serialize(student);
+        var encodedJson = Uri.EscapeDataString(json);
+
+        Navigation.NavigateTo($"/studentview?student={encodedJson}");
+    }
+
+    private void PassingIntParameter()
+    {
+        Navigation.NavigateTo("/weather/5");
+    }
+    private void PassingObjectParameterFirstApproach()
+    {
+        var student = new Student { Id = 1, Name = "John Doe", Age = 20 };
+        var json = JsonSerializer.Serialize(student);
+        var encodedJson = Uri.EscapeDataString(json);
+        Navigation.NavigateTo($"/studentview?student={encodedJson}");
+    }
+    private void PassingObjectParameterSecondApproach()
+    {
+        var student = new Student { Id = 1, Name = "John Doe", Age = 20 };
+        StudentService.CurrentStudent = student;
+        Navigation.NavigateTo("/studentserviceview");
+    }
+}
