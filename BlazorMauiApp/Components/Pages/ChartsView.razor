@@ -1,0 +1,140 @@
+﻿@page "/chartsview"
+@inject IJSRuntime JSRuntime
+
+<h3>ChartsView</h3>
+
+<div class="shadow-xl pt-4 pb-1 px-5 w-full mt-4" x-data="{chartData:chartData()}" x-init="chartData.fetch()" style="background-color:#383838;border-radius:5px;">
+		<div class="flex flex-wrap items-end">
+			<div class="flex-1">
+				<h3 class="text-lg font-semibold leading-tight">Income</h3>
+			</div>
+			<div class="relative" @click.away="chartData.showDropdown=false">
+				<button class="text-xs hover:text-gray-300 h-6 focus:outline-none" @click="chartData.showDropdown=!chartData.showDropdown">
+					<span x-text="chartData.options[chartData.selectedOption].label"></span><i class="ml-1 mdi mdi-chevron-down"></i>
+				</button>
+				<div class="shadow-lg rounded text-sm absolute top-auto right-0 min-w-full w-32 z-30 mt-1 -mr-3" x-show="chartData.showDropdown" style="background-color: #202022;display: none;" x-transition:enter="transition ease duration-300 transform" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease duration-300 transform" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4">
+					<span class="absolute top-0 right-0 w-3 h-3 transform rotate-45 -mt-1 mr-3" style="background-color: #202022;"></span>
+					<div class="rounded w-full relative z-10 py-1" style="background-color: #202022;">
+						<ul class="list-reset text-xs">
+							<template x-for="(item,index) in chartData.options">
+								<li class="px-4 py-2 hover:bg-gray-600 hover:text-white transition-colors duration-100 cursor-pointer" :class="{'text-white':index==chartData.selectedOption}" @click="chartData.selectOption(index);chartData.showDropdown=false">
+									<span x-text="item.label"></span>
+								</li>
+							</template>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="flex flex-wrap items-end mb-1">
+			<h4 class="text-2xl lg:text-3xl text-white font-semibold leading-tight inline-block mr-2" x-text="'$'+(chartData.data?chartData.data[chartData.date].total.comma_formatter():0)">0</h4>
+			<span class="inline-block" :class="chartData.data&&chartData.data[chartData.date].upDown<0?'text-red-500':'text-green-500'"><span x-text="chartData.data&&chartData.data[chartData.date].upDown<0?'▼':'▲'">0</span> <span x-text="chartData.data?chartData.data[chartData.date].upDown:0">0</span>%</span>
+		</div>
+		<div>
+			<canvas id="chart" class="w-100"></canvas>
+		</div>
+	</div>
+
+@code {
+
+}
+
+<script>
+	Number.prototype.comma_formatter = function () {
+		return this.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+	}
+
+	let chartData = function () {
+		return {
+			date: 'today',
+			options: [
+				{
+					label: 'Today',
+					value: 'today',
+				},
+				{
+					label: 'Last 7 Days',
+					value: '7days',
+				},
+				{
+					label: 'Last 30 Days',
+					value: '30days',
+				},
+				{
+					label: 'Last 6 Months',
+					value: '6months',
+				},
+				{
+					label: 'This Year',
+					value: 'year',
+				},
+			],
+			showDropdown: false,
+			selectedOption: 0,
+			selectOption: function (index) {
+				this.selectedOption = index;
+				this.date = this.options[index].value;
+				this.renderChart();
+			},
+			data: null,
+			fetch: function () {
+				fetch('https://cdn.jsdelivr.net/gh/swindon/fake-api@master/tailwindAlpineJsChartJsEx1.json')
+					.then(res => res.json())
+					.then(res => {
+						this.data = res.dates;
+						this.renderChart();
+					})
+			},
+			renderChart: function () {
+				let c = false;
+
+				Chart.helpers.each(Chart.instances, function (instance) {
+					if (instance.chart.canvas.id == 'chart') {
+						c = instance;
+					}
+				});
+
+				if (c) {
+					c.destroy();
+				}
+
+				let ctx = document.getElementById('chart').getContext('2d');
+
+				let chart = new Chart(ctx, {
+					type: "line",
+					data: {
+						labels: this.data[this.date].data.labels,
+						datasets: [
+							{
+								label: "Income",
+								backgroundColor: "rgba(102, 126, 234, 0.25)",
+								borderColor: "rgba(102, 126, 234, 1)",
+								pointBackgroundColor: "rgba(102, 126, 234, 1)",
+								data: this.data[this.date].data.income,
+							},
+						],
+					},
+					layout: {
+						padding: {
+							right: 10
+						}
+					},
+					options: {
+						scales: {
+							yAxes: [{
+								gridLines: {
+									display: false
+								},
+								ticks: {
+									callback: function (value, index, array) {
+										return value > 1000 ? ((value < 1000000) ? value / 1000 + 'K' : value / 1000000 + 'M') : value;
+									}
+								}
+							}]
+						}
+					}
+				});
+			}
+		}
+	}
+</script>
